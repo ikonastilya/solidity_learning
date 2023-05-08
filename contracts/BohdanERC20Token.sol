@@ -10,7 +10,7 @@ contract BohdanERC20Token is IERC20, Ownable {
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    constructor() { 
+    constructor() {
         _totalSupply = 50000;
     }
 
@@ -24,16 +24,10 @@ contract BohdanERC20Token is IERC20, Ownable {
         emit Transfer(address(this), to, amount);
     }
 
-    function burn(uint256 amount, address owner)
-        public
-        onlyOwner
-    {
+    function burn(uint256 amount, address owner) public onlyOwner {
         require(amount > 0, "Cannot burn zero");
         require(owner != address(0), "Cannot burn from no address");
-        require(
-            _balances[owner] >= amount,
-            "Not enough to burn"
-        );
+        require(_balances[owner] >= amount, "Not enough to burn");
 
         _balances[owner] -= amount;
         _totalSupply -= amount;
@@ -51,7 +45,7 @@ contract BohdanERC20Token is IERC20, Ownable {
         return _balances[user];
     }
 
-    function transfer(address to, uint256 amount) public returns(bool){
+    function transfer(address to, uint256 amount) public returns (bool) {
         require(to != address(0), "Receiver address cannot be zero");
         require(amount > 0, "Amount cannot be zero");
         require(_balances[msg.sender] >= amount, "Insufficient amount");

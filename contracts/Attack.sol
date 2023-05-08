@@ -4,7 +4,6 @@ pragma solidity ^0.8.9;
 import "contracts/BohdanERC20Token_weak.sol";
 
 contract Attack {
-
     BohdanERC20Token public erc20;
 
     constructor(address _token) {

@@ -5,16 +5,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract BohdanERC20Token is IERC20, Ownable {
-    uint256 private _tokenPrice = 1 ether;
+    uint256 private _tokenPrice = 1;
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
 
+    // todo: totalsupply for owner (?)
+
     constructor() {
-        _totalSupply = 50000;
+        _mint(50000, msg.sender);
     }
 
-    function mint(uint256 amount, address to) public onlyOwner {
+    function _mint(uint256 amount, address to) internal {
         require(amount >= 0, "Cannot mint zero");
         require(to != address(0), "Cannot mint to no address");
 
@@ -24,15 +26,14 @@ contract BohdanERC20Token is IERC20, Ownable {
         emit Transfer(address(this), to, amount);
     }
 
-    function burn(uint256 amount, address owner) public onlyOwner {
+    function _burn(uint256 amount, address owner) internal onlyOwner  {
         require(amount > 0, "Cannot burn zero");
-        require(owner != address(0), "Cannot burn from no address");
         require(_balances[owner] >= amount, "Not enough to burn");
 
         _balances[owner] -= amount;
         _totalSupply -= amount;
 
-        emit Transfer(address(this), owner, amount);
+        emit Transfer(address(0), owner, amount);
     }
 
     function totalSupply() public view returns (uint256) {
@@ -45,15 +46,44 @@ contract BohdanERC20Token is IERC20, Ownable {
         return _balances[user];
     }
 
-    function transfer(address to, uint256 amount) public returns (bool) {
+    function _verifyTransfer(address to, uint256 amount) private pure returns (bool) {
         require(to != address(0), "Receiver address cannot be zero");
         require(amount > 0, "Amount cannot be zero");
-        require(_balances[msg.sender] >= amount, "Insufficient amount");
 
-        _balances[msg.sender] -= amount;
+        return true;
+    }
+
+    function _performTransfer(address from, address to, uint256 amount) private returns (bool) {
+        _balances[from] -= amount;
         _balances[to] += amount;
 
+        return true;
+    }
+
+    function transfer(address to, uint256 amount) public returns (bool) {
+        _verifyTransfer(to, amount);
+        require(_balances[msg.sender] >= amount, "Insufficient amount");
+
+        _performTransfer(msg.sender, to, amount);
+
         emit Transfer(msg.sender, to, amount);
+
+        return true;
+    }
+
+    function transferFrom(
+        address owner,
+        address to,
+        uint256 amount
+    ) external returns (bool) {
+        _verifyTransfer(to, amount);
+        require(owner != address(0), "Owner address cannot be zero");
+        require(allowance(owner, msg.sender) >= amount, "Insufficient allowance");
+
+        _allowances[owner][msg.sender] -= amount;
+        _performTransfer(owner, to, amount);
+
+        emit Transfer(owner, to, amount);
 
         return true;
     }
@@ -80,46 +110,38 @@ contract BohdanERC20Token is IERC20, Ownable {
         return true;
     }
 
-    function transferFrom(
-        address owner,
-        address to,
-        uint256 amount
-    ) external returns (bool) {
-        require(owner != address(0), "Owner address cannot be zero");
-        require(to != address(0), "Receiver address cannot be zero");
-        require(amount > 0, "Amount cannot be zero");
-        require(allowance(owner, msg.sender) >= amount, "Insufficient amount");
-
-        _allowances[owner][msg.sender] -= amount;
-        _balances[owner] -= amount;
-        _balances[to] += amount;
-
-        emit Transfer(owner, to, amount);
-
-        return true;
-    }
-
-    function decimals() external pure returns (uint256) {
+    function decimals() external pure returns (uint8) {
         return 18;
     }
 
-    function getTokenPrice() external view returns (uint256) {
+    function symbol() external pure returns (string memory) {
+        return "BHD";
+    }
+
+    function name() external pure returns (string memory) {
+        return "Bohdan Euro";
+    }
+
+    function tokenPrice() external view returns (uint256) {
         return _tokenPrice;
     }
 
-    function deposit() public payable {
-        require(msg.value > 0, "Cannot deposit zero tokens");
+    function buy() public payable {
+        require(msg.value >= _tokenPrice, "Cannot deposit zero tokens");
         uint256 tokenAmount = msg.value / (_tokenPrice);
         _balances[msg.sender] += tokenAmount;
+
+        _totalSupply += tokenAmount;
     }
 
-    function withdraw(address to) public payable {
-        require(_balances[msg.sender] > 0, "Cannot withdraw without deposit");
-        uint256 withdrawAmount = balanceOf(msg.sender) * (_tokenPrice);
-        _balances[msg.sender] = 0;
+    function sell(uint amount) public {
+        require(_balances[msg.sender] > 0, "Cannot withdraw zero tokens");
+        require(_balances[msg.sender] > amount, "Withdrawing way too much");
 
-        bool transfered = transfer(to, withdrawAmount);
+        uint256 withdrawAmount = amount * (_tokenPrice);
+        _balances[msg.sender] -= withdrawAmount;
 
-        require(transfered, "Transaction not successful");
+        (bool transfered, ) = msg.sender.call{value: withdrawAmount}("");
+        require(transfered, "Transaction not successful");    
     }
 }

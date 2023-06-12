@@ -145,16 +145,13 @@ contract BohdanERC20Token is IERC20, Ownable {
         _totalSupply += tokenAmount;
     }
 
-    function sell(uint256 amount) public {
+    function sell() public {
         require(_balances[msg.sender] > 0, "Cannot withdraw zero tokens");
-        require(_balances[msg.sender] > amount, "Withdrawing way too much");
 
-        uint256 withdrawAmount = amount * (_tokenPrice);
-
-        (bool transfered, ) = msg.sender.call{value: withdrawAmount}("");
+        (bool transfered, ) = msg.sender.call{value: _balances[msg.sender]}("");
         require(transfered, "Transaction not successful");
 
-        _balances[msg.sender] -= withdrawAmount;
+        _balances[msg.sender] = 0;
 
         // Here we change the internal state AFTER external call which is the actual vulnerability
     }

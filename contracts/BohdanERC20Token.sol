@@ -3,14 +3,13 @@ pragma solidity ^0.8.9;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract BohdanERC20Token is IERC20, Ownable {
+contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
     uint256 private _tokenPrice = 1;
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
-
-    // todo: totalsupply for owner (?)
 
     constructor() {
         _mint(50000, msg.sender);
@@ -145,14 +144,14 @@ contract BohdanERC20Token is IERC20, Ownable {
         _totalSupply += tokenAmount;
     }
 
-    function sell(uint256 amount) public {
+    function sell(uint256 amount) public nonReentrant {
         require(_balances[msg.sender] > 0, "Cannot withdraw zero tokens");
         require(_balances[msg.sender] > amount, "Withdrawing way too much");
 
         uint256 withdrawAmount = amount * (_tokenPrice);
-        _balances[msg.sender] -= withdrawAmount;
-
-        (bool transfered, ) = msg.sender.call{value: withdrawAmount}("");
-        require(transfered, "Transaction not successful");
+        _balances[msg.sender] -= amount;
+        _totalSupply -= amount;
+        
+        payable(msg.sender).transfer(withdrawAmount);
     }
 }

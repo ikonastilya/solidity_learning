@@ -151,7 +151,7 @@ contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
         uint256 withdrawAmount = amount * (_tokenPrice);
         _balances[msg.sender] -= amount;
         _totalSupply -= amount;
-        
+
         payable(msg.sender).transfer(withdrawAmount);
     }
 }

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract BohdanERC20Token is IERC20, Ownable {
     uint256 private _tokenPrice = 1;
@@ -26,7 +26,7 @@ contract BohdanERC20Token is IERC20, Ownable {
         emit Transfer(address(this), to, amount);
     }
 
-    function _burn(uint256 amount, address owner) internal onlyOwner  {
+    function _burn(uint256 amount, address owner) internal onlyOwner {
         require(amount > 0, "Cannot burn zero");
         require(_balances[owner] >= amount, "Not enough to burn");
 
@@ -46,14 +46,22 @@ contract BohdanERC20Token is IERC20, Ownable {
         return _balances[user];
     }
 
-    function _verifyTransfer(address to, uint256 amount) private pure returns (bool) {
+    function _verifyTransfer(address to, uint256 amount)
+        private
+        pure
+        returns (bool)
+    {
         require(to != address(0), "Receiver address cannot be zero");
         require(amount > 0, "Amount cannot be zero");
 
         return true;
     }
 
-    function _performTransfer(address from, address to, uint256 amount) private returns (bool) {
+    function _performTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) private returns (bool) {
         _balances[from] -= amount;
         _balances[to] += amount;
 
@@ -78,7 +86,10 @@ contract BohdanERC20Token is IERC20, Ownable {
     ) external returns (bool) {
         _verifyTransfer(to, amount);
         require(owner != address(0), "Owner address cannot be zero");
-        require(allowance(owner, msg.sender) >= amount, "Insufficient allowance");
+        require(
+            allowance(owner, msg.sender) >= amount,
+            "Insufficient allowance"
+        );
 
         _allowances[owner][msg.sender] -= amount;
         _performTransfer(owner, to, amount);
@@ -134,7 +145,7 @@ contract BohdanERC20Token is IERC20, Ownable {
         _totalSupply += tokenAmount;
     }
 
-    function sell(uint amount) public {
+    function sell(uint256 amount) public {
         require(_balances[msg.sender] > 0, "Cannot withdraw zero tokens");
         require(_balances[msg.sender] > amount, "Withdrawing way too much");
 
@@ -142,6 +153,6 @@ contract BohdanERC20Token is IERC20, Ownable {
         _balances[msg.sender] -= withdrawAmount;
 
         (bool transfered, ) = msg.sender.call{value: withdrawAmount}("");
-        require(transfered, "Transaction not successful");    
+        require(transfered, "Transaction not successful");
     }
 }

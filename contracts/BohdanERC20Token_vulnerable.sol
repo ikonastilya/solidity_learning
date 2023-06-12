@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract BohdanERC20Token is IERC20, Ownable {
+contract BohdanVulnerableERC20Token is IERC20, Ownable {
     uint256 private _tokenPrice = 1;
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;

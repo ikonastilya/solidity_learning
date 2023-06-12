@@ -15,7 +15,7 @@ contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
         _mint(50000, msg.sender);
     }
 
-    function _mint(uint256 amount, address to) internal {
+    function _mint(uint256 amount, address to) internal onlyOwner {
         require(amount > 0, "Cannot mint zero");
         require(to != address(0), "Cannot mint to no address");
 
@@ -25,7 +25,7 @@ contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
         emit Transfer(address(this), to, amount);
     }
 
-    function _burn(uint256 amount, address owner) internal onlyOwner {
+    function _burn(uint256 amount, address owner) internal {
         require(amount > 0, "Cannot burn zero");
         require(_balances[owner] >= amount, "Not enough to burn");
 
@@ -145,8 +145,8 @@ contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
     }
 
     function sell(uint256 amount) public nonReentrant {
-        require(_balances[msg.sender] > 0, "Cannot withdraw zero tokens");
-        require(_balances[msg.sender] > amount, "Withdrawing way too much");
+        require(amount > 0, "Cannot withdraw zero tokens");
+        require(_balances[msg.sender] >= amount, "Withdrawing way too much");
 
         uint256 withdrawAmount = amount * (_tokenPrice);
         _balances[msg.sender] -= amount;

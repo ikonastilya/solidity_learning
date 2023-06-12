@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {BohdanERC20Token} from "contracts/BohdanERC20Token_vulnerable.sol";
+import {BohdanVulnerableERC20Token} from "contracts/BohdanERC20Token_vulnerable.sol";
 
 contract Attack {
-    BohdanERC20Token public erc20;
+    BohdanVulnerableERC20Token public erc20;
 
     constructor(address _token) {
-        erc20 = BohdanERC20Token(_token);
+        erc20 = BohdanVulnerableERC20Token(_token);
     }
 
     receive() external payable {

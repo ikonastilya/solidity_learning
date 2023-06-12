@@ -17,7 +17,7 @@ contract BohdanERC20Token is IERC20, Ownable {
     }
 
     function _mint(uint256 amount, address to) internal {
-        require(amount >= 0, "Cannot mint zero");
+        require(amount > 0, "Cannot mint zero");
         require(to != address(0), "Cannot mint to no address");
 
         _balances[to] += amount;

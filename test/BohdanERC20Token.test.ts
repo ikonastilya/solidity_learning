@@ -98,4 +98,21 @@ describe('BohdanERC20Token', () => {
       ).to.be.revertedWith('Withdrawing way too much');
     });
   });
+
+  describe('Metadata', () => {
+    it('Should give the right symbol', async () => {
+      const { bohdanERC20Token } = await deployContract();
+      expect(await bohdanERC20Token.symbol()).to.be.equal('BHD');
+    });
+
+    it('Should give 18 decimals', async () => {
+      const { bohdanERC20Token } = await deployContract();
+      expect(await bohdanERC20Token.decimals()).to.be.equal(18);
+    });
+
+    it('Should return the right name', async () => {
+      const { bohdanERC20Token } = await deployContract();
+      expect(await bohdanERC20Token.name()).to.be.equal('Bohdan Euro');
+    });
+  });
 });

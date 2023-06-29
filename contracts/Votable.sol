@@ -17,6 +17,12 @@ contract VotingContract {
         address nextVoter;
     }
 
+    struct ProposedVotes {
+        uint256 vote;
+        uint256 powerOfVote;
+    } // todo: implement a second linked list that keeps the highest value as head 
+    // once voting is ended, set head price as the new price
+
     mapping(address => Voter) private _voters;
     address private _head;
     uint256 public totalSupply;
@@ -89,18 +95,15 @@ contract VotingContract {
 
     function buyTokens() public payable {
         uint256 fee = (msg.value * feePercentage) / 100;
-        uint256 purchaseAmount = msg.value - fee;
+        uint256 purchaseAmount = msg.value - fee; // todo: (msg.value - fee) * price
 
         require(purchaseAmount > 0, "Insufficient payment");
-
-        if (msg.value > purchaseAmount) {
-            payable(msg.sender).transfer(msg.value - purchaseAmount);
-        }
 
         address voterAddress = msg.sender;
         Voter storage voter = _voters[voterAddress];
         voter.balance += purchaseAmount;
         totalSupply += purchaseAmount;
+        amountToBurn += fee;
 
         if (
             voter.balance == purchaseAmount ||
@@ -118,37 +121,33 @@ contract VotingContract {
         require(_voters[msg.sender].balance >= _amount, "Insufficient balance");
 
         uint256 fee = (_amount * feePercentage) / 100;
-        uint256 saleAmount = _amount - fee;
+        uint256 saleAmount = _amount - fee; // todo: (_amount - fee) / price;
 
         _voters[msg.sender].balance -= _amount;
         totalSupply -= _amount;
-
-        if (fee > 0) {
-            // Burn fee tokens
-            amountToBurn += fee;
-        }
+        amountToBurn += fee;
 
         payable(msg.sender).transfer(saleAmount * priceOption);
     }
 
     function calculateMostVotedPrice() public view returns (uint256) {
-    // Mapping to store the total votes for each price
+        // Mapping to store the total votes for each price
 
-    address currentVoter = _head;
+        address currentVoter = _head;
 
-    // Iterate through the linked list to count the votes for each price
-    while (currentVoter != address(0)) {
-        Voter memory voter = _voters[currentVoter];
-        uint256 voterBalance = voter.balance;
-        uint256 voterPrice = voter.vote;
+        // Iterate through the linked list to count the votes for each price
+        while (currentVoter != address(0)) {
+            Voter memory voter = _voters[currentVoter];
+            uint256 voterBalance = voter.balance;
+            uint256 voterPrice = voter.vote;
 
-        _votesByPrice[voterPrice] += voterBalance;
+            _votesByPrice[voterPrice] += voterBalance;
 
-        currentVoter = voter.nextVoter;
+            currentVoter = voter.nextVoter;
+        }
+
+        // todo: how to go through to calculate the mapping ????
+
     }
-
-    // todo: how to go through to calculate the mapping ????
-
-}
 
 }

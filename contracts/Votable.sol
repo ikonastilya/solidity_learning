@@ -25,6 +25,8 @@ contract VotingContract {
     uint256 public feePercentage;
     uint256 public votingEndTime;
 
+    mapping (uint256 => uint256) private _votesByPrice;
+
     constructor(uint256 _feePercentage) {
         feePercentage = _feePercentage;
         votingEndTime = block.timestamp + timeToVote;
@@ -61,7 +63,6 @@ contract VotingContract {
 
     function _insertVoter(address _currentVoter, address _voterToInsert)
         private
-        returns (address)
     {
         if (
             _currentVoter == address(0) ||
@@ -129,4 +130,25 @@ contract VotingContract {
 
         payable(msg.sender).transfer(saleAmount * priceOption);
     }
+
+    function calculateMostVotedPrice() public view returns (uint256) {
+    // Mapping to store the total votes for each price
+
+    address currentVoter = _head;
+
+    // Iterate through the linked list to count the votes for each price
+    while (currentVoter != address(0)) {
+        Voter memory voter = _voters[currentVoter];
+        uint256 voterBalance = voter.balance;
+        uint256 voterPrice = voter.vote;
+
+        _votesByPrice[voterPrice] += voterBalance;
+
+        currentVoter = voter.nextVoter;
+    }
+
+    // todo: how to go through to calculate the mapping ????
+
+}
+
 }

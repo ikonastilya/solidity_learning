@@ -8,6 +8,8 @@ contract VotingContract {
 
     bool public actionExecuted;
 
+    // tests w/ typechain for time dependant things
+
     struct Voter {
         uint256 balance;
         uint256 vote;
@@ -21,12 +23,10 @@ contract VotingContract {
 
     uint256 public priceOption;
     uint256 public feePercentage;
-    uint256 public burnAmount;
     uint256 public votingEndTime;
 
-    constructor(uint256 _feePercentage, uint256 _burnAmount) {
+    constructor(uint256 _feePercentage) {
         feePercentage = _feePercentage;
-        burnAmount = _burnAmount;
         votingEndTime = block.timestamp + timeToVote;
         actionExecuted = false;
     }
@@ -68,14 +68,12 @@ contract VotingContract {
             _voters[_voterToInsert].balance > _voters[_currentVoter].balance
         ) {
             _voters[_voterToInsert].nextVoter = _currentVoter;
-            return _voterToInsert;
         }
 
         _voters[_currentVoter].nextVoter = _insertVoter(
             _voters[_currentVoter].nextVoter,
             _voterToInsert
         );
-        return _currentVoter;
     }
 
     function burnFee() public {

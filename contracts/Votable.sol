@@ -53,7 +53,7 @@ contract VotingContract is BohdanERC20Token, Ownable, ReentrancyGuard {
         address next
     ) public {
         address voterAddress = msg.sender;
-        uint256 voterBalance = balanceOf(voterAddress;)
+        uint256 voterBalance = balanceOf(voterAddress);
 
         require(block.timestamp <= votingEndTime, "Voting period has ended");
         require(_option != priceOption, "Already voted for this option");

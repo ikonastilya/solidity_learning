@@ -2,10 +2,8 @@
 pragma solidity ^0.8.9;
 
 import {BohdanERC20Token} from "./BohdanERC20Token.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract VotingContract is BohdanERC20Token, Ownable, ReentrancyGuard {
+contract VotingContract is BohdanERC20Token {
     uint256 public timeToVote = 1 weeks;
     uint256 public executionTime = 1 weeks;
     uint256 public amountToBurn;
@@ -42,7 +40,7 @@ contract VotingContract is BohdanERC20Token, Ownable, ReentrancyGuard {
 
     function isAbleToVote(address user) public view returns (bool) {
         uint256 balance = _voters[user].balance;
-        uint256 minimumBalance = (totalSupply * 5) / 10000; // 0.05% of totalSupply
+        uint256 minimumBalance = (totalSupply() * 5) / 10000; // 0.05% of totalSupply
 
         return balance > minimumBalance;
     }
@@ -79,17 +77,44 @@ contract VotingContract is BohdanERC20Token, Ownable, ReentrancyGuard {
             sortNode(prev, next, voterAddress);
         } else {
             // if it exists, we add the power to the price he wanted
-            _proposedPrices[index].power += voterBalance; 
+            _proposedPrices[index].power += voterBalance;
             sortNode(prev, next, index);
         }
     }
 
-    function givePricesList()
+    function getPricesList()
         public
         view
-        returns (mapping(address => ProposedVote))
+        returns (address[] memory, ProposedVote[] memory)
     {
-        return _proposedPrices;
+        address[] memory addresses = new address[](totalVotesCounted);
+        ProposedVote[] memory structs = new ProposedVote[](totalVotesCounted);
+
+        uint256 currentIndex = 0;
+        for (uint256 i = 0; i < totalVotesCounted; i++) {
+            address currentAddress = _getAddressAtIndex(i);
+            ProposedVote storage currentStruct = _proposedPrices[
+                currentAddress
+            ];
+            addresses[currentIndex] = currentAddress;
+            structs[currentIndex] = currentStruct;
+            currentIndex++;
+        }
+
+        return (addresses, structs);
+    }
+
+    function _getAddressAtIndex(uint256 index) private view returns (address) {
+        uint256 currentIndex = 0;
+        address currentAddress;
+        for (uint256 i = 0; i < totalVotesCounted; i++) {
+            if (_proposedPrices[currentAddress].vote != 0) {
+                if (currentIndex == index) {
+                    return currentAddress;
+                }
+                currentIndex++;
+            }
+        }
     }
 
     function sortNode(
@@ -130,31 +155,39 @@ contract VotingContract is BohdanERC20Token, Ownable, ReentrancyGuard {
         require(block.timestamp >= executionTime, "Only once a week");
         require(!actionExecuted, "Already executed");
 
-        _voters[address(0)].balance += amountToBurn;
-        totalSupply -= amountToBurn;
+        transfer(address(0), amountToBurn);
+        _totalSupply -= amountToBurn;
 
         actionExecuted = true;
     }
 
-    function buyTokens(address prev, address next, addressCurrentIndex) public payable nonReentrant {
+    function buyTokens(
+        address prev,
+        address next,
+        address currentIndex
+    ) public payable {
         uint256 fee = (msg.value * feePercentage) / 100;
         uint256 purchaseAmount = (msg.value - fee) * priceOption;
 
         require(purchaseAmount > 0, "Insufficient payment");
 
         address voterAddress = msg.sender;
-        Voter storage voter = _voters[voterAddress];
 
-        totalSupply += purchaseAmount;
+        _totalSupply += purchaseAmount;
         amountToBurn += fee;
         _balances[voterAddress] += purchaseAmount;
 
-        if(_proposedPrices[votedAddress].vote !== 0) {
-            sortNode(prev, next, currentIndex)
+        if (_proposedPrices[voterAddress].vote != 0) {
+            sortNode(prev, next, currentIndex);
         }
     }
 
-    function sellTokens(uint256 _amount, address prev, address next, address currentIndex) public nonReentrant {
+    function sellTokens(
+        uint256 _amount,
+        address prev,
+        address next,
+        address currentIndex
+    ) public {
         require(_voters[msg.sender].balance >= _amount, "Insufficient balance");
 
         uint256 fee = (_amount * feePercentage) / 100;
@@ -162,11 +195,11 @@ contract VotingContract is BohdanERC20Token, Ownable, ReentrancyGuard {
 
         _balances[msg.sender] -= _amount;
 
-        totalSupply -= _amount;
+        _totalSupply -= _amount;
         amountToBurn += fee;
 
-        if(_proposedPrices[votedAddress].vote !== 0) {
-            sortNode(prev, next, currentIndex)
+        if (_proposedPrices[msg.sender].vote != 0) {
+            sortNode(prev, next, currentIndex);
         }
 
         payable(msg.sender).transfer(saleAmount);

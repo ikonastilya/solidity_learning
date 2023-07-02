@@ -7,7 +7,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 
 contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
     uint256 private _tokenPrice = 1;
-    uint256 private _totalSupply;
+    uint256 internal _totalSupply;
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) internal _allowances;
 

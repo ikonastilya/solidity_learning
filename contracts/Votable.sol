@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {BohdanERC20Token} from "./BohdanERC20Token.sol";
+import {ERC20Token} from "./ERC20Token.sol";
 
-contract VotingContract is BohdanERC20Token {
-    uint256 public timeToVote = 1 weeks;
-    uint256 public executionTime = 1 weeks;
+contract VotingContract is ERC20Token {
+    uint256 public timeToVote = 60 * 60 * 24 * 7;
+    uint256 public executionTime = 60 * 60 * 24 * 7;
     uint256 public amountToBurn;
 
     bool public actionExecuted;
@@ -45,11 +45,7 @@ contract VotingContract is BohdanERC20Token {
         return balance > minimumBalance;
     }
 
-    function vote(
-        uint256 _option,
-        address prev,
-        address next
-    ) public {
+    function vote(uint256 _option, address prev, address next) public {
         address voterAddress = msg.sender;
         uint256 voterBalance = balanceOf(voterAddress);
 
@@ -57,7 +53,6 @@ contract VotingContract is BohdanERC20Token {
         require(_option != priceOption, "Already voted for this option");
         require(isAbleToVote(voterAddress), "Not enough balance to vote");
 
-        require(voterBalance > 0, "You do not have any tokens");
         require(_voters[voterAddress] == address(0), "Already voted");
 
         address index = _isParticularPriceProposed[_option];
@@ -117,11 +112,7 @@ contract VotingContract is BohdanERC20Token {
         }
     }
 
-    function sortNode(
-        address prev,
-        address next,
-        address currentIndex
-    ) public {
+    function sortNode(address prev, address next, address currentIndex) public {
         if (
             _proposedPrices[prev].power < _proposedPrices[currentIndex].power &&
             _proposedPrices[next].power > _proposedPrices[currentIndex].power &&
@@ -148,17 +139,15 @@ contract VotingContract is BohdanERC20Token {
 
     function endVote() public onlyOwner {
         require(block.timestamp > votingEndTime, "Voting not ended");
-        priceOption = _proposedPrices[_head].vote;
+        _tokenPrice = _proposedPrices[_head].vote;
     }
 
     function burnFee() public onlyOwner {
         require(block.timestamp >= executionTime, "Only once a week");
         require(!actionExecuted, "Already executed");
+        amountToBurn = 0;
 
-        transfer(address(0), amountToBurn);
-        _totalSupply -= amountToBurn;
-
-        actionExecuted = true;
+        _burn(amountToBurn, msg.sender);
     }
 
     function buyTokens(

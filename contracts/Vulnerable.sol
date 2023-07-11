@@ -4,8 +4,8 @@ pragma solidity ^0.8.9;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract BohdanVulnerableERC20Token is IERC20, Ownable {
-    uint256 private _tokenPrice = 1;
+contract Vulnerable is IERC20, Ownable {
+    uint256 private _tokenPrice = 1 ether;
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -148,7 +148,7 @@ contract BohdanVulnerableERC20Token is IERC20, Ownable {
     function sell() public {
         require(_balances[msg.sender] > 0, "Cannot withdraw zero tokens");
 
-        (bool transfered, ) = msg.sender.call{value: _balances[msg.sender]}("");
+        (bool transfered, ) = msg.sender.call{value: _balances[msg.sender] * _tokenPrice}("");
         require(transfered, "Transaction not successful");
 
         _balances[msg.sender] = 0;

@@ -5,8 +5,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
-    uint256 private _tokenPrice = 1;
+contract ERC20Token is IERC20, Ownable, ReentrancyGuard {
+    uint256 internal _tokenPrice = 1;
     uint256 internal _totalSupply;
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) internal _allowances;
@@ -45,15 +45,11 @@ contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
         return _balances[user];
     }
 
-    function _verifyTransfer(address to, uint256 amount)
-        private
-        pure
-        returns (bool)
-    {
+    modifier verifyTransfer(address to, uint256 amount) {
         require(to != address(0), "Receiver address cannot be zero");
         require(amount > 0, "Amount cannot be zero");
 
-        return true;
+        _;
     }
 
     function _performTransfer(
@@ -67,8 +63,10 @@ contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
         return true;
     }
 
-    function transfer(address to, uint256 amount) public returns (bool) {
-        _verifyTransfer(to, amount);
+    function transfer(
+        address to,
+        uint256 amount
+    ) public verifyTransfer(to, amount) returns (bool) {
         require(_balances[msg.sender] >= amount, "Insufficient amount");
 
         _performTransfer(msg.sender, to, amount);
@@ -82,9 +80,7 @@ contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
         address owner,
         address to,
         uint256 amount
-    ) external returns (bool) {
-        _verifyTransfer(to, amount);
-        require(owner != address(0), "Owner address cannot be zero");
+    ) external verifyTransfer(to, amount) returns (bool) {
         require(
             allowance(owner, msg.sender) >= amount,
             "Insufficient allowance"
@@ -98,11 +94,10 @@ contract BohdanERC20Token is IERC20, Ownable, ReentrancyGuard {
         return true;
     }
 
-    function allowance(address owner, address spender)
-        public
-        view
-        returns (uint256)
-    {
+    function allowance(
+        address owner,
+        address spender
+    ) public view returns (uint256) {
         require(owner != address(0), "Owner address cannot be zero");
         require(spender != address(0), "Spender address cannot be zero");
 

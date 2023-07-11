@@ -45,7 +45,11 @@ contract VotingContract is ERC20Token {
         return balance > minimumBalance;
     }
 
-    function vote(uint256 _option, address prev, address next) public {
+    function vote(
+        uint256 _option,
+        address prev,
+        address next
+    ) public {
         address voterAddress = msg.sender;
         uint256 voterBalance = balanceOf(voterAddress);
 
@@ -112,7 +116,11 @@ contract VotingContract is ERC20Token {
         }
     }
 
-    function sortNode(address prev, address next, address currentIndex) public {
+    function sortNode(
+        address prev,
+        address next,
+        address currentIndex
+    ) public {
         if (
             _proposedPrices[prev].power < _proposedPrices[currentIndex].power &&
             _proposedPrices[next].power > _proposedPrices[currentIndex].power &&

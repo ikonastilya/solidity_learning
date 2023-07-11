@@ -63,10 +63,11 @@ contract ERC20Token is IERC20, Ownable, ReentrancyGuard {
         return true;
     }
 
-    function transfer(
-        address to,
-        uint256 amount
-    ) public verifyTransfer(to, amount) returns (bool) {
+    function transfer(address to, uint256 amount)
+        public
+        verifyTransfer(to, amount)
+        returns (bool)
+    {
         require(_balances[msg.sender] >= amount, "Insufficient amount");
 
         _performTransfer(msg.sender, to, amount);
@@ -94,10 +95,11 @@ contract ERC20Token is IERC20, Ownable, ReentrancyGuard {
         return true;
     }
 
-    function allowance(
-        address owner,
-        address spender
-    ) public view returns (uint256) {
+    function allowance(address owner, address spender)
+        public
+        view
+        returns (uint256)
+    {
         require(owner != address(0), "Owner address cannot be zero");
         require(spender != address(0), "Spender address cannot be zero");
 

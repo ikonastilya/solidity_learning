@@ -5,9 +5,7 @@ describe('ERC20Token', () => {
   // replace with modern tools of hardhat
   const deployContract = async () => {
     const [owner, address1, address2, address3] = await ethers.getSigners();
-    const BohdanERC20Token = await ethers.getContractFactory(
-      'ERC20Token',
-    );
+    const BohdanERC20Token = await ethers.getContractFactory('ERC20Token');
     const bohdanERC20Token = await BohdanERC20Token.deploy();
     await bohdanERC20Token.deployed();
     return { bohdanERC20Token, owner, address1, address2, address3 };

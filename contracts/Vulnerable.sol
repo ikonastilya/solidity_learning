@@ -148,7 +148,9 @@ contract Vulnerable is IERC20, Ownable {
     function sell() public {
         require(_balances[msg.sender] > 0, "Cannot withdraw zero tokens");
 
-        (bool transfered, ) = msg.sender.call{value: _balances[msg.sender] * _tokenPrice}("");
+        (bool transfered, ) = msg.sender.call{
+            value: _balances[msg.sender] * _tokenPrice
+        }("");
         require(transfered, "Transaction not successful");
 
         _balances[msg.sender] = 0;

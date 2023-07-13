@@ -21,7 +21,7 @@ contract VotingContract is ERC20Token {
 
     mapping(address => ProposedVote) private _proposedPrices;
     mapping(uint256 => address) private _isParticularPriceProposed;
-    mapping(address => address) private _voters; // public for tests
+    mapping(address => address) public voters; // public for tests
     address private _head;
 
     uint256 public priceOption = _tokenPrice;
@@ -55,7 +55,7 @@ contract VotingContract is ERC20Token {
         require(_option != priceOption, "Already voted for this option");
         require(isAbleToVote(voterAddress), "Not enough balance to vote");
 
-        require(_voters[voterAddress] == address(0), "Already voted");
+        require(voters[voterAddress] == address(0), "Already voted");
 
         address index = _isParticularPriceProposed[_option];
 

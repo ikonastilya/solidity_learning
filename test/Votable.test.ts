@@ -112,7 +112,7 @@ describe('Votable', () => {
         .vote(2, ethers.constants.AddressZero, ethers.constants.AddressZero);
 
       expect(Number(await votable.totalVotesCounted())).to.be.greaterThan(0);
-      expect(await votable._voters(address1.address)).to.equal(
+      expect(await votable.voters(address1.address)).to.equal(
         ethers.constants.AddressZero,
       );
       // bcs he is the first in proposedVotes
@@ -140,7 +140,7 @@ describe('Votable', () => {
         .vote(2, ethers.constants.AddressZero, ethers.constants.AddressZero);
 
       expect(Number(await votable.totalVotesCounted())).to.be.greaterThan(0);
-      expect(await votable._voters(address1.address)).to.equal(
+      expect(await votable.voters(address1.address)).to.equal(
         ethers.constants.AddressZero,
       );
       // bcs he is the first in proposedVotes

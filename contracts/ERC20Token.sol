@@ -25,14 +25,13 @@ contract ERC20Token is IERC20, Ownable, ReentrancyGuard {
         emit Transfer(address(this), to, amount);
     }
 
-    function _burn(uint256 amount, address owner) internal {
-        require(amount > 0, "Cannot burn zero");
-        require(_balances[owner] >= amount, "Not enough to burn");
+    function _burn(uint256 amount) internal {
+        require(balanceOf(msg.sender) >= amount, "Not enough to burn");
 
-        _balances[owner] -= amount;
+        _balances[msg.sender] -= amount;
         _totalSupply -= amount;
 
-        emit Transfer(address(0), owner, amount);
+        emit Transfer(msg.sender, address(0), amount);
     }
 
     function totalSupply() public view returns (uint256) {
@@ -45,8 +44,7 @@ contract ERC20Token is IERC20, Ownable, ReentrancyGuard {
         return _balances[user];
     }
 
-    modifier verifyTransfer(address to, uint256 amount) {
-        require(to != address(0), "Receiver address cannot be zero");
+    modifier verifyTransfer(uint256 amount) {
         require(amount > 0, "Amount cannot be zero");
 
         _;
@@ -65,7 +63,7 @@ contract ERC20Token is IERC20, Ownable, ReentrancyGuard {
 
     function transfer(address to, uint256 amount)
         public
-        verifyTransfer(to, amount)
+        verifyTransfer(amount)
         returns (bool)
     {
         require(_balances[msg.sender] >= amount, "Insufficient amount");
@@ -81,7 +79,7 @@ contract ERC20Token is IERC20, Ownable, ReentrancyGuard {
         address owner,
         address to,
         uint256 amount
-    ) external verifyTransfer(to, amount) returns (bool) {
+    ) external verifyTransfer(amount) returns (bool) {
         require(
             allowance(owner, msg.sender) >= amount,
             "Insufficient allowance"

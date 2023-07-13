@@ -12,8 +12,6 @@ contract VotingContract is ERC20Token {
 
     uint256 public totalVotesCounted;
 
-    // tests w/ typechain for time dependant things
-
     struct ProposedVote {
         uint256 vote;
         uint256 power;
@@ -23,10 +21,10 @@ contract VotingContract is ERC20Token {
 
     mapping(address => ProposedVote) private _proposedPrices;
     mapping(uint256 => address) private _isParticularPriceProposed;
-    mapping(address => address) private _voters;
+    mapping(address => address) private _voters; // public for tests
     address private _head;
 
-    uint256 public priceOption;
+    uint256 public priceOption = _tokenPrice;
     uint256 public feePercentage;
     uint256 public votingEndTime;
 
@@ -39,7 +37,7 @@ contract VotingContract is ERC20Token {
     }
 
     function isAbleToVote(address user) public view returns (bool) {
-        uint256 balance = _voters[user].balance;
+        uint256 balance = _balances[user];
         uint256 minimumBalance = (totalSupply() * 5) / 10000; // 0.05% of totalSupply
 
         return balance > minimumBalance;
@@ -64,8 +62,6 @@ contract VotingContract is ERC20Token {
         if (_proposedPrices[index].vote == 0) {
             // if voter does not exist then we create one
 
-            totalVotesCounted++; // make +1 for loop so we know the length of mapping
-
             _proposedPrices[voterAddress] = ProposedVote(
                 _option,
                 voterBalance,
@@ -74,6 +70,7 @@ contract VotingContract is ERC20Token {
             );
 
             sortNode(prev, next, voterAddress);
+            totalVotesCounted++; // make +1 for loop so we know the length of mapping
         } else {
             // if it exists, we add the power to the price he wanted
             _proposedPrices[index].power += voterBalance;
@@ -121,7 +118,24 @@ contract VotingContract is ERC20Token {
         address next,
         address currentIndex
     ) public {
-        if (
+        if (totalVotesCounted == 0) {
+            _head = currentIndex;
+            _proposedPrices[currentIndex].prev = prev;
+            _proposedPrices[currentIndex].next = next;
+
+            _proposedPrices[prev].next = currentIndex;
+            _proposedPrices[next].prev = currentIndex;
+        } else if (_proposedPrices[next].power == 0) {
+            _proposedPrices[currentIndex].prev = prev;
+            _proposedPrices[currentIndex].next = address(0);
+
+            _proposedPrices[prev].next = currentIndex;
+        } else if (_proposedPrices[prev].power == 0) {
+            _proposedPrices[currentIndex].next = next;
+            _proposedPrices[currentIndex].prev = address(0);
+
+            _proposedPrices[next].prev = currentIndex;
+        } else if (
             _proposedPrices[prev].power < _proposedPrices[currentIndex].power &&
             _proposedPrices[next].power > _proposedPrices[currentIndex].power &&
             _proposedPrices[prev].next == next
@@ -153,9 +167,9 @@ contract VotingContract is ERC20Token {
     function burnFee() public onlyOwner {
         require(block.timestamp >= executionTime, "Only once a week");
         require(!actionExecuted, "Already executed");
-        amountToBurn = 0;
 
-        _burn(amountToBurn, msg.sender);
+        transfer(address(0), amountToBurn);
+        amountToBurn = 0;
     }
 
     function buyTokens(
@@ -171,6 +185,7 @@ contract VotingContract is ERC20Token {
         address voterAddress = msg.sender;
 
         _totalSupply += purchaseAmount;
+        _balances[owner()] += fee;
         amountToBurn += fee;
         _balances[voterAddress] += purchaseAmount;
 
@@ -185,7 +200,7 @@ contract VotingContract is ERC20Token {
         address next,
         address currentIndex
     ) public {
-        require(_voters[msg.sender].balance >= _amount, "Insufficient balance");
+        require(_balances[msg.sender] >= _amount, "Insufficient balance");
 
         uint256 fee = (_amount * feePercentage) / 100;
         uint256 saleAmount = (_amount - fee) * priceOption;
@@ -193,6 +208,7 @@ contract VotingContract is ERC20Token {
         _balances[msg.sender] -= _amount;
 
         _totalSupply -= _amount;
+        _balances[owner()] += fee;
         amountToBurn += fee;
 
         if (_proposedPrices[msg.sender].vote != 0) {

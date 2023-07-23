@@ -16,8 +16,9 @@ contract ERC20Token is IERC20, Ownable, ReentrancyGuard {
     }
 
     function _mint(uint256 amount, address to) internal onlyOwner {
-        require(amount > 0, "Cannot mint zero");
-        require(to != address(0), "Cannot mint to no address");
+        if (to == address(0)) {
+            _burn(amount);
+        }
 
         _balances[to] += amount;
         _totalSupply += amount;
@@ -54,11 +55,9 @@ contract ERC20Token is IERC20, Ownable, ReentrancyGuard {
         address from,
         address to,
         uint256 amount
-    ) private returns (bool) {
+    ) private {
         _balances[from] -= amount;
         _balances[to] += amount;
-
-        return true;
     }
 
     function transfer(address to, uint256 amount)

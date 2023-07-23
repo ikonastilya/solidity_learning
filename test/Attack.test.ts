@@ -34,19 +34,5 @@ describe('Vulnerable', () => {
         Number(await ethers.provider.getBalance(bohdanERC20Token.address)),
       ).to.be.equal(0);
     });
-
-    it('Should revert if money sent < 1 ether', async () => {
-      const { bohdanERC20Token, owner, attack, address1 } =
-        await deployContract();
-
-      await bohdanERC20Token
-        .connect(owner)
-        .buy({ value: ethers.utils.parseEther('2') });
-      await expect(
-        attack
-          .connect(address1)
-          .drainMoney({ value: ethers.utils.parseEther('0.5') }),
-      ).to.be.revertedWith('Not enough ether');
-    });
   });
 });

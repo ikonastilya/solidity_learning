@@ -4,6 +4,7 @@ import { BigNumber, Signer } from 'ethers';
 import { ethers } from 'hardhat';
 import keccak256 from 'keccak256';
 import { MerkleTree } from 'merkletreejs';
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 
 import {
   Vesting__factory,
@@ -25,7 +26,7 @@ describe('SignatureVesting', function () {
     await erc20.transfer(vesting.address, defaultVestingBalance);
   });
 
-  it('Should emit Vest event with correct data when vesting tokens', async function () {
+  it('Should work with signatures', async function () {
     const claimer = await ethers.provider.getSigner(2);
     const claimerAddress = await claimer.getAddress();
 
@@ -70,7 +71,7 @@ describe('MerkleVesting', function () {
     await erc20.transfer(vesting.address, merkleVestingBalance);
   });
 
-  it('Should emit Vest event with correct data when vesting tokens', async function () {
+  it('Should work with merkle tree', async function () {
     const address2 = await ethers.provider.getSigner(1).getAddress();
     const address3 = await ethers.provider.getSigner(2).getAddress();
 
@@ -88,11 +89,11 @@ describe('MerkleVesting', function () {
       sortPairs: true,
     });
 
-    console.log(ethers.utils.keccak256(vestData1));
-
     const vestTx = await vesting
       .changeMerkleRoot(merkleTree.getHexRoot())
       .then((i) => i.wait());
+
+    await time.increase(60 * 60 * 24 * 365 * 3);
 
     const claimTx2 = await vesting
       .connect(ethers.provider.getSigner(1))
@@ -117,6 +118,54 @@ describe('MerkleVesting', function () {
       merkleVestingBalance.sub(balance2).sub(balance3),
     );
     expect(balance2).to.be.equal(merkleVestingBalance.div(2));
+    expect(balance3).to.be.equal(merkleVestingBalance.div(3));
+  });
+
+  it('Should revert if cliff is not ended', async function () {
+    const address2 = await ethers.provider.getSigner(1).getAddress();
+    const address3 = await ethers.provider.getSigner(2).getAddress();
+
+    const vestData1 = ethers.utils.solidityPack(
+      ['address', 'uint256'],
+      [address2, merkleVestingBalance.div(2)],
+    );
+    const vestData2 = ethers.utils.solidityPack(
+      ['address', 'uint256'],
+      [address3, merkleVestingBalance.div(3)],
+    );
+
+    const merkleTree = new MerkleTree([vestData1, vestData2], keccak256, {
+      hashLeaves: true,
+      sortPairs: true,
+    });
+
+    const vestTx = await vesting
+      .changeMerkleRoot(merkleTree.getHexRoot())
+      .then((i) => i.wait());
+
+    await expect(
+      vesting
+        .connect(ethers.provider.getSigner(1))
+        .claim(
+          merkleVestingBalance.div(2),
+          merkleTree.getHexProof(keccak256(vestData1)),
+        ),
+    ).to.be.revertedWith('Cliff not ended');
+
+    await time.increase(60 * 60 * 24 * 365 * 3);
+
+    const claimTx3 = await vesting
+      .connect(ethers.provider.getSigner(2))
+      .claim(
+        merkleVestingBalance.div(3),
+        merkleTree.getHexProof(keccak256(vestData2)),
+      )
+      .then((i) => i.wait());
+
+    const balance3 = await erc20.balanceOf(address3);
+    const vestingBalance = await erc20.balanceOf(vesting.address);
+
+    expect(vestingBalance).to.be.equal(merkleVestingBalance.sub(balance3));
     expect(balance3).to.be.equal(merkleVestingBalance.div(3));
   });
 });

@@ -36,7 +36,8 @@ contract Vesting is Ownable {
         view
         returns (bool)
     {
-        require(timeDeployed + cliff > block.timestamp, "Cliff not ended");
+        require(block.timestamp > timeDeployed + cliff, "Cliff not ended");
+
         return
             _claimedUsers[msg.sender] == false &&
             MerkleProof.verify(
@@ -48,6 +49,7 @@ contract Vesting is Ownable {
 
     function claim(uint256 amount, bytes32[] calldata merkleProof) public {
         require(isAbleToClaim(amount, merkleProof), "Not able to claim");
+
         _claimedUsers[msg.sender] = true;
         token.transfer(msg.sender, amount);
     }

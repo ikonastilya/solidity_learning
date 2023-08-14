@@ -1,10 +1,10 @@
 /* eslint-disable camelcase */
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { BigNumber, Signer } from 'ethers';
 import { ethers } from 'hardhat';
 import keccak256 from 'keccak256';
 import { MerkleTree } from 'merkletreejs';
-import { time } from '@nomicfoundation/hardhat-network-helpers';
 
 import {
   Vesting__factory,

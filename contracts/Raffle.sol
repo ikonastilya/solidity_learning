@@ -23,6 +23,7 @@ contract BohdanRaffle is RaffleAccessControl, OwnableUpgradeable {
     bool private _isRollActive;
 
     ConsumerBase private _consumer;
+    uint256 private _savedRandomNumber;
 
     struct UserInfo {
         address user;
@@ -178,11 +179,11 @@ contract BohdanRaffle is RaffleAccessControl, OwnableUpgradeable {
 
     function getRandomNumber()
         external
-        view
         onlyRole(RAFFLE_ADMIN)
         returns (uint256)
     {
         uint256 randomNumber = _consumer.randomNumber();
+        _savedRandomNumber = randomNumber;
         return randomNumber;
     }
 
@@ -194,7 +195,7 @@ contract BohdanRaffle is RaffleAccessControl, OwnableUpgradeable {
         emit RollStarted(_currentRoundID, block.timestamp);
     }
 
-    function endRaffle(uint256 randomNumber) public onlyRole(RAFFLE_ADMIN) {
+    function endRaffle(uint256 randomIndex) public onlyRole(RAFFLE_ADMIN) {
         require(_isRollActive, "Raffle not started");
         require(_participants.length > 0, "No users in raffle");
         require(!_consumer.locked(), "VRF locked");
@@ -211,10 +212,10 @@ contract BohdanRaffle is RaffleAccessControl, OwnableUpgradeable {
         // }
 
         if (
-            _participants[randomNumber + 1].from >= randomNumber &&
-            _participants[randomNumber + 1].to <= randomNumber
+            _participants[randomIndex + 1].from >= _savedRandomNumber &&
+            _participants[randomIndex + 1].to <= _savedRandomNumber
         ) {
-            winner = _participants[randomNumber + 1];
+            winner = _participants[randomIndex + 1];
         } else {
             revert("Owner tried to fool us");
         }
